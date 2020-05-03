@@ -52,7 +52,7 @@ annotatr_cache <- local({
 #' # See vignette for an example with custom annotation
 #'
 #' @export
-build_annotations = function(genome, annotations) {
+build_annotations = function(genome, annotations, upstream = 1000, downstream = 0) {
     # Expand annotations first
     annotations = expand_annotations(annotations)
 
@@ -87,7 +87,7 @@ build_annotations = function(genome, annotations) {
         annots_grl = c(annots_grl, GenomicRanges::GRangesList(chromatin = suppressWarnings(build_hmm_annots(genome = genome, annotations = hmm_annotations))))
     }
     if(length(gene_annotations) != 0) {
-        annots_grl = c(annots_grl, suppressWarnings(build_gene_annots(genome = genome, annotations = gene_annotations)))
+        annots_grl = c(annots_grl, suppressWarnings(build_gene_annots(genome = genome, annotations = gene_annotations, upstream = upstream, downstream = downstream)))
     }
     if(length(cpg_annotations) != 0) {
         annots_grl = c(annots_grl, suppressWarnings(build_cpg_annots(genome = genome, annotations = cpg_annotations)))
@@ -490,7 +490,7 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
 #' @param annotations A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.
 #'
 #' @return A list of \code{GRanges} objects with unique \code{id} of the form \code{[type]:i}, \code{tx_id} being the UCSC knownGene transcript name, \code{gene_id} being the Entrez Gene ID, \code{symbol} being the gene symbol from the Entrez ID to symbol mapping in \code{org.db} for that species, and \code{type} being the annotation type.
-build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations = annotatr::builtin_annotations()) {
+build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations = annotatr::builtin_annotations(), upstream = 1000, downstream = 0) {
     # Ensure valid arguments
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
@@ -569,7 +569,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     if(any(grepl('promoters', annotations)) || any(grepl('1to5kb', annotations)) || any(grepl('intergenic', annotations))) {
         message('Building promoters...')
         ### promoters
-            promoters_gr = GenomicFeatures::promoters(txdb, upstream = 1000, downstream = 0)
+            promoters_gr = GenomicFeatures::promoters(txdb, upstream = upstream, downstream = downstream)
             # Add Entrez ID, symbol, and type
             GenomicRanges::mcols(promoters_gr)$gene_id = id_maps[match(GenomicRanges::mcols(promoters_gr)$tx_id, id_maps$TXID), 'GENEID']
             GenomicRanges::mcols(promoters_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(promoters_gr)$gene_id, eg2symbol$gene_id), 'symbol']

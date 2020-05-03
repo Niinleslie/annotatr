@@ -4,7 +4,7 @@
 \alias{build_annotations}
 \title{A function to build annotations from TxDb.* and AnnotationHub resources}
 \usage{
-build_annotations(genome, annotations)
+build_annotations(genome, annotations, upstream = 1000, downstream = 0)
 }
 \arguments{
 \item{genome}{The genome assembly.}
